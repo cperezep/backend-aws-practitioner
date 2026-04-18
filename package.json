@@ -17,7 +17,8 @@
     "format:check": "biome format .",
     "synth": "cdk synth",
     "deploy": "cdk deploy",
-    "destroy": "cdk destroy"
+    "destroy": "cdk destroy",
+    "spec:export": "aws apigateway get-export --rest-api-id 44hcac7j89 --stage-name prod --export-type oas30 --accepts application/yaml openapi.yml"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",

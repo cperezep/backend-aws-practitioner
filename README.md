@@ -2,6 +2,22 @@
 
 REST API built with AWS CDK, API Gateway, and Lambda (Node.js 20). Implements a simple Products service with an in-memory repository.
 
+## API Documentation
+
+OpenAPI spec: [`openapi.yml`](./openapi.yml)
+
+To browse interactively, open [editor.swagger.io](https://editor.swagger.io) and go to **File → Import URL**:
+
+```
+https://raw.githubusercontent.com/cperezep/backend-aws-practitioner/main/openapi.yml
+```
+
+To re-export the spec from the deployed API and overwrite `openapi.yml`:
+
+```bash
+npm run spec:export
+```
+
 ## Technologies
 
 | Layer | Technology |
