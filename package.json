@@ -8,18 +8,34 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "cdk": "cdk",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy"
   },
   "devDependencies": {
-    "@types/jest": "^30",
+    "@biomejs/biome": "^2.4.12",
+    "@types/aws-lambda": "^8.10.161",
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.10.1",
+    "aws-cdk": "2.1118.0",
+    "esbuild": "^0.28.0",
     "jest": "^30",
     "ts-jest": "^29",
-    "aws-cdk": "2.1118.0",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3"
   },
   "dependencies": {
+    "@middy/core": "^7.2.3",
+    "@middy/http-error-handler": "^7.2.3",
+    "@middy/http-event-normalizer": "^7.2.3",
+    "@middy/http-json-body-parser": "^7.2.3",
     "aws-cdk-lib": "^2.248.0",
     "constructs": "^10.5.0"
   }
