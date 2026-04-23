@@ -16,6 +16,7 @@ describe('ProductService', () => {
     mockRepository = {
       findAll: jest.fn().mockResolvedValue(MOCK_PRODUCTS),
       findById: jest.fn(),
+      create: jest.fn(),
     };
     service = new ProductService(mockRepository);
   });

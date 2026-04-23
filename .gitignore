@@ -9,3 +9,6 @@ dist
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+.github
+.specify
+specs

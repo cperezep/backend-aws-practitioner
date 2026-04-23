@@ -19,9 +19,10 @@ describe('InMemoryProductRepository', () => {
 
   describe('findById', () => {
     it('returns the product when the id exists', async () => {
-      const result = await repository.findById('1');
+      const [firstProduct] = PRODUCTS;
+      const result = await repository.findById(firstProduct.id);
 
-      expect(result).toEqual(PRODUCTS[0]);
+      expect(result).toEqual(firstProduct);
     });
 
     it('returns undefined when the id does not exist', async () => {

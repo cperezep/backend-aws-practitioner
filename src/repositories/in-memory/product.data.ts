@@ -1,4 +1,4 @@
-import type { Product } from '@/common/types.js';
+import type { Product } from '@/common/types';
 
 export const PRODUCTS: Product[] = [
   {

@@ -12,3 +12,9 @@ export const ok = (body: unknown): APIGatewayProxyResult => ({
   headers: CORS_HEADERS,
   body: JSON.stringify(body),
 });
+
+export const created = (body: unknown): APIGatewayProxyResult => ({
+  statusCode: 201,
+  headers: CORS_HEADERS,
+  body: JSON.stringify(body),
+});

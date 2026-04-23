@@ -1,6 +1,6 @@
 import type { APIGatewayProxyEvent, Context } from 'aws-lambda';
 
-jest.mock('@/services/product.service.js', () => ({
+jest.mock('@/services/product.service', () => ({
   ProductService: jest.fn().mockImplementation(() => ({
     getById: jest.fn().mockResolvedValue({ id: 'mock-product-id', name: 'Test Product', price: 99 }),
   })),

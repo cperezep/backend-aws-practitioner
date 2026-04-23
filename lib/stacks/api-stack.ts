@@ -25,6 +25,13 @@ export class ApiStack extends cdk.Stack {
       resource: productsResource,
     });
 
+    // POST /products
+    new ApiLambda(this, 'CreateProduct', {
+      entry: 'create-product',
+      method: 'POST',
+      resource: productsResource,
+    });
+
     // GET /products/{productId}
     const productResource = productsResource.addResource('{productId}');
     new ApiLambda(this, 'GetProduct', {
