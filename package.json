@@ -33,11 +33,14 @@
     "typescript": "~5.9.3"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1036.0",
+    "@aws-sdk/lib-dynamodb": "^3.1036.0",
     "@middy/core": "^7.2.3",
     "@middy/http-error-handler": "^7.2.3",
     "@middy/http-event-normalizer": "^7.2.3",
     "@middy/http-json-body-parser": "^7.2.3",
     "aws-cdk-lib": "^2.248.0",
-    "constructs": "^10.5.0"
+    "constructs": "^10.5.0",
+    "zod": "^4.3.6"
   }
 }

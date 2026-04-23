@@ -4,3 +4,14 @@ export interface Product {
   description?: string;
   price: number;
 }
+
+export interface Stock {
+  product_id: string;
+  count: number;
+}
+
+export interface ProductWithStock extends Product {
+  count: number;
+}
+
+export type CreateProductInput = Omit<Product, 'id'>;
