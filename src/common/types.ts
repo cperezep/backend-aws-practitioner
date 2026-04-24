@@ -14,4 +14,4 @@ export interface ProductWithStock extends Product {
   count: number;
 }
 
-export type CreateProductInput = Omit<Product, 'id'>;
+export type CreateProductInput = Omit<ProductWithStock, 'id'>;

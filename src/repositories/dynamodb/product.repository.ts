@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, GetCommand, ScanCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import type { CreateProductInput, ProductWithStock } from '@/common/types';
 import type { ProductRepository } from '@/repositories/product.repository';
 
@@ -48,8 +48,21 @@ export class DynamoDbProductRepository implements ProductRepository {
     };
   }
 
-  // Implemented in Phase 4
-  async create(_input: CreateProductInput): Promise<ProductWithStock> {
-    throw new Error('Not implemented');
+  async create({ title, description, price, count }: CreateProductInput): Promise<ProductWithStock> {
+    const id = crypto.randomUUID();
+
+    const item: Record<string, unknown> = { id, title, price };
+    if (description !== undefined) item.description = description;
+
+    await this.client.send(
+      new TransactWriteCommand({
+        TransactItems: [
+          { Put: { TableName: this.productsTable, Item: item } },
+          { Put: { TableName: this.stockTable, Item: { product_id: id, count } } },
+        ],
+      }),
+    );
+
+    return { id, title, description, price, count };
   }
 }

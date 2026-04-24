@@ -1,11 +1,12 @@
 import type { APIGatewayProxyEvent, Context } from 'aws-lambda';
-import type { Product } from '@/common/types';
+import type { ProductWithStock } from '@/common/types';
 
-const MOCK_PRODUCT: Product = {
+const MOCK_PRODUCT: ProductWithStock = {
   id: 'generated-uuid',
   title: 'New Book',
   description: 'A great book',
   price: 19.99,
+  count: 0,
 };
 
 jest.mock('@/services/product.service', () => ({
