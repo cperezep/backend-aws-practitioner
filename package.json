@@ -18,6 +18,7 @@
     "synth": "cdk synth",
     "deploy": "cdk deploy",
     "destroy": "cdk destroy",
+    "seed": "ts-node --project tsconfig.json scripts/seed-tables.ts",
     "spec:export": "aws apigateway get-export --rest-api-id 44hcac7j89 --stage-name prod --export-type oas30 --accepts application/yaml openapi.yml"
   },
   "devDependencies": {
