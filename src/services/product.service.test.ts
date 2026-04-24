@@ -1,11 +1,11 @@
 import { NotFoundError } from '@/common/errors';
-import type { Product } from '@/common/types';
+import type { ProductWithStock } from '@/common/types';
 import type { ProductRepository } from '@/repositories/product.repository';
 import { ProductService } from './product.service';
 
-const MOCK_PRODUCTS: Product[] = [
-  { id: '1', title: 'AWS CDK in Practice', description: 'Learn CDK fundamentals', price: 29.99 },
-  { id: '2', title: 'Serverless Patterns', description: 'Common Lambda patterns', price: 34.99 },
+const MOCK_PRODUCTS: ProductWithStock[] = [
+  { id: '1', title: 'AWS CDK in Practice', description: 'Learn CDK fundamentals', price: 29.99, count: 4 },
+  { id: '2', title: 'Serverless Patterns', description: 'Common Lambda patterns', price: 34.99, count: 6 },
 ];
 
 describe('ProductService', () => {

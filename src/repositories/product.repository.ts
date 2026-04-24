@@ -1,7 +1,7 @@
-import type { CreateProductInput, Product } from '@/common/types';
+import type { CreateProductInput, ProductWithStock } from '@/common/types';
 
 export interface ProductRepository {
-  findAll(): Promise<Product[]>;
-  findById(id: string): Promise<Product | undefined>;
-  create(input: CreateProductInput): Promise<Product>;
+  findAll(): Promise<ProductWithStock[]>;
+  findById(id: string): Promise<ProductWithStock | undefined>;
+  create(input: CreateProductInput): Promise<ProductWithStock>;
 }
