@@ -1,22 +1,109 @@
 openapi: "3.0.1"
 info:
   title: "Products Service"
-  description: "Products API"
-  version: "2026-04-18T04:56:07Z"
+  description: "Products REST API backed by AWS Lambda and DynamoDB"
+  version: "2026-04-23"
 servers:
 - url: "https://44hcac7j89.execute-api.us-east-1.amazonaws.com/{basePath}"
   variables:
     basePath:
       default: "prod"
 paths:
+  /products:
+    get:
+      summary: "List all products"
+      description: "Returns all products with their current stock counts."
+      operationId: "getProducts"
+      responses:
+        "200":
+          description: "Successful response"
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ProductWithStock"
+    post:
+      summary: "Create a product"
+      description: "Creates a new product and an associated stock record atomically."
+      operationId: "createProduct"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductInput"
+      responses:
+        "201":
+          description: "Product created"
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductWithStock"
+        "400":
+          description: "Invalid request body"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    options:
+      responses:
+        "204":
+          description: "CORS preflight"
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: "string"
+            Access-Control-Allow-Methods:
+              schema:
+                type: "string"
+            Access-Control-Allow-Headers:
+              schema:
+                type: "string"
+          content: {}
   /products/{productId}:
     get:
+      summary: "Get a product by ID"
+      description: "Returns a single product with its stock count."
+      operationId: "getProduct"
       parameters:
       - name: "productId"
         in: "path"
         required: true
         schema:
           type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful response"
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductWithStock"
+        "400":
+          description: "Missing productId path parameter"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Product not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     options:
       parameters:
       - name: "productId"
@@ -26,7 +113,7 @@ paths:
           type: "string"
       responses:
         "204":
-          description: "204 response"
+          description: "CORS preflight"
           headers:
             Access-Control-Allow-Origin:
               schema:
@@ -38,38 +125,64 @@ paths:
               schema:
                 type: "string"
           content: {}
-  /products:
-    get: {}
-    options:
-      responses:
-        "204":
-          description: "204 response"
-          headers:
-            Access-Control-Allow-Origin:
-              schema:
-                type: "string"
-            Access-Control-Allow-Methods:
-              schema:
-                type: "string"
-            Access-Control-Allow-Headers:
-              schema:
-                type: "string"
-          content: {}
-  /:
-    options:
-      responses:
-        "204":
-          description: "204 response"
-          headers:
-            Access-Control-Allow-Origin:
-              schema:
-                type: "string"
-            Access-Control-Allow-Methods:
-              schema:
-                type: "string"
-            Access-Control-Allow-Headers:
-              schema:
-                type: "string"
-          content: {}
-components: {}
+components:
+  schemas:
+    Product:
+      type: "object"
+      required:
+        - id
+        - title
+        - price
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "Server-assigned unique identifier"
+        title:
+          type: "string"
+          minLength: 1
+          description: "Product name"
+        description:
+          type: "string"
+          description: "Optional product description"
+        price:
+          type: "number"
+          minimum: 0
+          description: "Product price (>= 0)"
+    ProductWithStock:
+      allOf:
+        - $ref: "#/components/schemas/Product"
+        - type: "object"
+          required:
+            - count
+          properties:
+            count:
+              type: "integer"
+              minimum: 0
+              description: "Number of units currently in stock"
+    CreateProductInput:
+      type: "object"
+      required:
+        - title
+        - price
+        - count
+      properties:
+        title:
+          type: "string"
+          minLength: 1
+        description:
+          type: "string"
+        price:
+          type: "number"
+          minimum: 0
+        count:
+          type: "integer"
+          minimum: 0
+          default: 0
+          description: "Initial stock count (defaults to 0)"
+    ErrorResponse:
+      type: "object"
+      properties:
+        message:
+          type: "string"
 x-amazon-apigateway-security-policy: "TLS_1_0"
