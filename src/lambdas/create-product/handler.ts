@@ -11,6 +11,9 @@ const productService = new ProductService(new DynamoDbProductRepository());
 const createProduct = async (event: APIGatewayProxyEvent) => {
   const body = parseBody(CreateProductSchema, event.body);
 
+  // biome-ignore lint/suspicious/noConsole: This log is intentional for debugging purposes
+  console.log('Creating product with data:', body);
+
   const product = await productService.create(body);
 
   return created(product);

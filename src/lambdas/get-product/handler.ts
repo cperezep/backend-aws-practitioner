@@ -14,6 +14,9 @@ const getProduct = async (event: APIGatewayProxyEvent) => {
     throw new BadRequestError('productId path parameter is required');
   }
 
+  // biome-ignore lint/suspicious/noConsole: This log is intentional for debugging purposes
+  console.log('Fetching product with ID:', productId);
+
   return ok(await productService.getById(productId));
 };
 
