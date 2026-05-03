@@ -1,5 +1,6 @@
-import { NotFoundError } from '@/common/errors.js';
-import type { ProductRepository } from '@/repositories/product.repository.js';
+import { NotFoundError } from '@/common/errors';
+import type { CreateProductInput } from '@/common/types';
+import type { ProductRepository } from '@/repositories/product.repository';
 
 export class ProductService {
   constructor(private readonly productRepository: ProductRepository) {}
@@ -14,5 +15,9 @@ export class ProductService {
     if (!product) throw new NotFoundError('Product', id);
 
     return product;
+  }
+
+  async create(input: CreateProductInput) {
+    return this.productRepository.create(input);
   }
 }

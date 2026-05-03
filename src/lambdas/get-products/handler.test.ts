@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEvent, Context } from 'aws-lambda';
-import type { Product } from '@/common/types';
+import type { ProductWithStock } from '@/common/types';
 import { ProductService } from '@/services/product.service';
 
 jest.mock('@/lambdas/shared/middleware', () => ({
@@ -12,9 +12,9 @@ import { handler } from './handler';
 
 const MockProductService = ProductService as jest.MockedClass<typeof ProductService>;
 
-const MOCK_PRODUCTS: Product[] = [
-  { id: '1', title: 'AWS CDK in Practice', description: 'Learn CDK fundamentals', price: 29.99 },
-  { id: '2', title: 'Serverless Patterns', description: 'Common Lambda patterns', price: 34.99 },
+const MOCK_PRODUCTS: ProductWithStock[] = [
+  { id: '1', title: 'AWS CDK in Practice', description: 'Learn CDK fundamentals', price: 29.99, count: 4 },
+  { id: '2', title: 'Serverless Patterns', description: 'Common Lambda patterns', price: 34.99, count: 6 },
 ];
 
 const buildEvent = (overrides: Partial<APIGatewayProxyEvent> = {}): Partial<APIGatewayProxyEvent> => ({

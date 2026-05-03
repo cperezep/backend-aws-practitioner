@@ -12,6 +12,8 @@ export interface ApiLambdaProps {
   method: string;
   /** API Gateway resource to attach this method to */
   resource: apigateway.IResource;
+  /** Environment variables injected into the Lambda function at runtime */
+  environment?: Record<string, string>;
 }
 
 export class ApiLambda extends Construct {
@@ -28,6 +30,7 @@ export class ApiLambda extends Construct {
       runtime: lambdaRuntime.Runtime.NODEJS_20_X,
       memorySize: 256,
       timeout: Duration.seconds(10),
+      environment: props.environment,
       bundling: {
         minify: true,
         sourceMap: true,
