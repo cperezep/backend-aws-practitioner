@@ -3,14 +3,19 @@ import { Duration } from 'aws-cdk-lib/core';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as lambda_nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import * as path from 'path';
 import { ApiLambda } from '../constructs/api-lambda';
 
+export interface ImportServiceStackProps extends cdk.StackProps {
+  catalogItemsQueue: sqs.IQueue;
+}
+
 export class ImportServiceStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: ImportServiceStackProps) {
     super(scope, id, props);
 
     const api = new apigateway.RestApi(this, 'ImportApi', {
@@ -57,6 +62,7 @@ export class ImportServiceStack extends cdk.Stack {
       timeout: Duration.seconds(30),
       environment: {
         IMPORT_BUCKET_NAME: bucket.bucketName,
+        CATALOG_ITEMS_QUEUE_URL: props.catalogItemsQueue.queueUrl,
       },
       bundling: {
         minify: true,
@@ -73,6 +79,7 @@ export class ImportServiceStack extends cdk.Stack {
     bucket.grantRead(parserFn, 'uploaded/*');
     bucket.grantDelete(parserFn, 'uploaded/*');
     bucket.grantPut(parserFn, 'parsed/*');
+    props.catalogItemsQueue.grantSendMessages(parserFn);
 
     new cdk.CfnOutput(this, 'ImportApiUrl', {
       value: api.url,

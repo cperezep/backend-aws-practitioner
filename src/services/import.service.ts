@@ -6,11 +6,13 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import csvParser = require('csv-parser');
 
 const s3Client = new S3Client({});
+const sqsClient = new SQSClient({});
 
 export const generateUploadUrl = async (name: string): Promise<string> => {
   const command = new PutObjectCommand({
@@ -30,8 +32,12 @@ export const parseUploadedFile = async (bucket: string, key: string): Promise<vo
   }
 
   for await (const row of Body.pipe(csvParser())) {
-    // biome-ignore lint/suspicious/noConsole: Intentional logging per spec FR-011/SC-004
-    console.log('record', row);
+    await sqsClient.send(
+      new SendMessageCommand({
+        QueueUrl: process.env.CATALOG_ITEMS_QUEUE_URL,
+        MessageBody: JSON.stringify(row),
+      }),
+    );
   }
 
   const parsedKey = key.replace(/^uploaded\//, 'parsed/');

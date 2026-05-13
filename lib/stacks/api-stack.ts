@@ -1,10 +1,18 @@
 import * as cdk from 'aws-cdk-lib/core';
+import { Duration } from 'aws-cdk-lib/core';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as lambdaRuntime from 'aws-cdk-lib/aws-lambda';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { Construct } from 'constructs';
+import * as path from 'path';
 import { ApiLambda } from '../constructs/api-lambda';
 import { DynamoDbTables } from '../constructs/dynamodb-tables';
 
 export class ApiStack extends cdk.Stack {
+  public readonly catalogItemsQueue: sqs.Queue;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -67,6 +75,33 @@ export class ApiStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'StockTableName', {
       value: tables.stockTable.tableName,
       description: 'DynamoDB stock table name',
+    });
+
+    // SQS queue for batch product creation
+    this.catalogItemsQueue = new sqs.Queue(this, 'CatalogItemsQueue', {
+      visibilityTimeout: Duration.seconds(180),
+    });
+
+    const catalogBatchProcess = new lambda.NodejsFunction(this, 'CatalogBatchProcess', {
+      entry: path.join(process.cwd(), 'src', 'lambdas', 'catalog-batch-process', 'handler.ts'),
+      handler: 'handler',
+      runtime: lambdaRuntime.Runtime.NODEJS_20_X,
+      memorySize: 256,
+      timeout: Duration.seconds(30),
+      environment: tableEnv,
+      bundling: { minify: true, sourceMap: true },
+    });
+
+    tables.grantReadWriteData(catalogBatchProcess);
+
+    catalogBatchProcess.addEventSource(new SqsEventSource(this.catalogItemsQueue, {
+      batchSize: 5,
+      reportBatchItemFailures: true,
+    }));
+
+    new cdk.CfnOutput(this, 'CatalogItemsQueueUrl', {
+      value: this.catalogItemsQueue.queueUrl,
+      description: 'SQS queue URL for catalog batch product creation',
     });
   }
 }
