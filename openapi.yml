@@ -69,6 +69,54 @@ paths:
               schema:
                 type: "string"
           content: {}
+  /import:
+    get:
+      operationId: getImportUploadUrl
+      summary: Issue a pre-signed S3 PUT URL for a CSV upload
+      description: |
+        Returns a short-lived (300 s) pre-signed S3 PUT URL that the client
+        uses to upload the named CSV file directly to the import bucket
+        under the key `uploaded/{name}`. The browser MUST send the upload
+        with header `Content-Type: text/csv`.
+      tags: [Import]
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: Basename of the CSV file (no path separators).
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+            pattern: '^[A-Za-z0-9._-]+\.csv$'
+            example: products.csv
+      responses:
+        "200":
+          description: Pre-signed URL successfully generated.
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uri
+        "400":
+          description: Invalid or missing `name`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing:
+                  value: { message: 'name is required' }
+                notCsv:
+                  value: { message: 'name must end with .csv' }
+                invalidChars:
+                  value: { message: 'name contains invalid characters' }
+        "500":
+          description: Internal error generating the signed URL.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /products/{productId}:
     get:
       summary: "Get a product by ID"

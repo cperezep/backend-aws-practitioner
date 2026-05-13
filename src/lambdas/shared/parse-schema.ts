@@ -6,7 +6,7 @@ import { BadRequestError } from '@/common/errors';
  * Throws a `BadRequestError` with a human-readable message on failure,
  * so Middy's httpErrorHandler will convert it to a 400 HTTP response.
  */
-export const parseBody = <T>(schema: z.ZodSchema<T>, body: unknown): T => {
+export const parseSchema = <T>(schema: z.ZodSchema<T>, body: unknown): T => {
   const result = schema.safeParse(body);
 
   if (!result.success) {

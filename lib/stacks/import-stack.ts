@@ -1,0 +1,82 @@
+import * as cdk from 'aws-cdk-lib/core';
+import { Duration } from 'aws-cdk-lib/core';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
+import * as lambda_nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { Construct } from 'constructs';
+import * as path from 'path';
+import { ApiLambda } from '../constructs/api-lambda';
+
+export class ImportServiceStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    const api = new apigateway.RestApi(this, 'ImportApi', {
+      restApiName: 'Import Service',
+      description: 'Import API',
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowHeaders: ['Content-Type', 'Authorization'],
+      },
+    });
+
+    const bucket = new s3.Bucket(this, 'ImportProductsBucket', {
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      cors: [
+        {
+          allowedMethods: [s3.HttpMethods.PUT],
+          allowedOrigins: ['*'],
+          allowedHeaders: ['*'],
+          exposedHeaders: ['ETag'],
+        },
+      ],
+    });
+
+    const importResource = api.root.addResource('import');
+    const signer = new ApiLambda(this, 'ImportProductsFile', {
+      entry: 'import-products-file',
+      method: 'GET',
+      resource: importResource,
+      environment: {
+        IMPORT_BUCKET_NAME: bucket.bucketName,
+      },
+    });
+
+    bucket.grantPut(signer.handler, 'uploaded/*');
+
+    const parserFn = new lambda_nodejs.NodejsFunction(this, 'ImportFileParser', {
+      entry: path.join(process.cwd(), 'src', 'lambdas', 'import-file-parser', 'handler.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      memorySize: 512,
+      timeout: Duration.seconds(30),
+      environment: {
+        IMPORT_BUCKET_NAME: bucket.bucketName,
+      },
+      bundling: {
+        minify: true,
+        sourceMap: true,
+      },
+    });
+
+    bucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED,
+      new s3n.LambdaDestination(parserFn),
+      { prefix: 'uploaded/' },
+    );
+
+    bucket.grantRead(parserFn, 'uploaded/*');
+    bucket.grantDelete(parserFn, 'uploaded/*');
+    bucket.grantPut(parserFn, 'parsed/*');
+
+    new cdk.CfnOutput(this, 'ImportApiUrl', {
+      value: api.url,
+      description: 'Import API Gateway endpoint URL',
+    });
+  }
+}
