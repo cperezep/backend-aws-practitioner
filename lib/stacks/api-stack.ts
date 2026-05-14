@@ -5,6 +5,8 @@ import * as lambda from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as lambdaRuntime from 'aws-cdk-lib/aws-lambda';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as snsSubscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import { Construct } from 'constructs';
 import * as path from 'path';
 import { ApiLambda } from '../constructs/api-lambda';
@@ -102,6 +104,42 @@ export class ApiStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'CatalogItemsQueueUrl', {
       value: this.catalogItemsQueue.queueUrl,
       description: 'SQS queue URL for catalog batch product creation',
+    });
+
+    // SNS topic — notifies on every successful product creation
+    const createProductTopic = new sns.Topic(this, 'CreateProductTopic', {
+      topicName: 'createProductTopic',
+      displayName: 'Product Creation Notifications',
+    });
+
+    const adminEmail = process.env.NOTIFY_ADMIN_EMAIL;
+    const opsEmail = process.env.NOTIFY_OPS_EMAIL;
+    const highValueThreshold = Number(process.env.NOTIFY_HIGH_VALUE_PRICE_THRESHOLD ?? '100');
+
+    if (!adminEmail || !opsEmail) {
+      throw new Error('NOTIFY_ADMIN_EMAIL and NOTIFY_OPS_EMAIL must be set in .env');
+    }
+
+    // Primary subscription: receives ALL product-created events (no filter)
+    createProductTopic.addSubscription(
+      new snsSubscriptions.EmailSubscription(adminEmail),
+    );
+
+    // Secondary subscription: receives only high-value products (price >= threshold)
+    createProductTopic.addSubscription(
+      new snsSubscriptions.EmailSubscription(opsEmail, {
+        filterPolicy: {
+          price: sns.SubscriptionFilter.numericFilter({ greaterThanOrEqualTo: highValueThreshold }),
+        },
+      }),
+    );
+
+    createProductTopic.grantPublish(catalogBatchProcess);
+    catalogBatchProcess.addEnvironment('CREATE_PRODUCT_TOPIC_ARN', createProductTopic.topicArn);
+
+    new cdk.CfnOutput(this, 'CreateProductTopicArn', {
+      value: createProductTopic.topicArn,
+      description: 'SNS topic ARN for product creation notifications',
     });
   }
 }

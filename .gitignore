@@ -9,6 +9,9 @@ dist
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+# Local environment variables (copy from .env.example)
+.env
 .github
 .specify
 specs
