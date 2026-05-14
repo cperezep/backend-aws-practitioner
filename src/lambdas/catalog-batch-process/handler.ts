@@ -3,7 +3,7 @@ import { parseSchema } from '@/lambdas/shared/parse-schema';
 import { DynamoDbProductRepository } from '@/repositories/dynamodb/product.repository';
 import { NotificationService } from '@/services/notification.service';
 import { ProductService } from '@/services/product.service';
-import { ProductSchema } from '../shared/product.schema';
+import { CsvProductSchema } from './catalog-batch-process.schema';
 
 const productService = new ProductService(new DynamoDbProductRepository());
 const notificationService = new NotificationService();
@@ -14,7 +14,7 @@ export const handler = async (event: SQSEvent): Promise<SQSBatchResponse> => {
   for (const record of event.Records) {
     try {
       const body = JSON.parse(record.body);
-      const input = parseSchema(ProductSchema, body);
+      const input = parseSchema(CsvProductSchema, body);
 
       const product = await productService.create(input);
       await notificationService.notifyProductCreated(product);
