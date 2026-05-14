@@ -2,10 +2,17 @@ import type { SQSEvent, SQSRecord } from 'aws-lambda';
 import type { ProductWithStock } from '@/common/types';
 
 const mockCreate = jest.fn();
+const mockNotifyProductCreated = jest.fn();
 
 jest.mock('@/services/product.service', () => ({
   ProductService: jest.fn().mockImplementation(() => ({
     create: mockCreate,
+  })),
+}));
+
+jest.mock('@/services/notification.service', () => ({
+  NotificationService: jest.fn().mockImplementation(() => ({
+    notifyProductCreated: mockNotifyProductCreated,
   })),
 }));
 
@@ -31,6 +38,8 @@ describe('catalogBatchProcess handler', () => {
   beforeEach(() => {
     mockCreate.mockReset();
     mockCreate.mockResolvedValue(MOCK_PRODUCT);
+    mockNotifyProductCreated.mockReset();
+    mockNotifyProductCreated.mockResolvedValue(MOCK_PRODUCT);
   });
 
   it('processes a single valid record and returns no failures', async () => {
@@ -40,6 +49,8 @@ describe('catalogBatchProcess handler', () => {
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
     expect(mockCreate).toHaveBeenCalledWith({ title: 'Widget', price: 9.99, count: 0 });
+    expect(mockNotifyProductCreated).toHaveBeenCalledTimes(1);
+    expect(mockNotifyProductCreated).toHaveBeenCalledWith(MOCK_PRODUCT);
     expect(result.batchItemFailures).toHaveLength(0);
   });
 
@@ -52,6 +63,7 @@ describe('catalogBatchProcess handler', () => {
     const result = await handler(event);
 
     expect(mockCreate).toHaveBeenCalledTimes(5);
+    expect(mockNotifyProductCreated).toHaveBeenCalledTimes(5);
     expect(result.batchItemFailures).toHaveLength(0);
   });
 
@@ -106,6 +118,7 @@ describe('catalogBatchProcess handler', () => {
     const result = await handler(event);
 
     expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockNotifyProductCreated).not.toHaveBeenCalled();
     expect(result.batchItemFailures).toEqual([
       { itemIdentifier: 'msg-1' },
       { itemIdentifier: 'msg-2' },
