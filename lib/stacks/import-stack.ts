@@ -30,6 +30,20 @@ export class ImportServiceStack extends cdk.Stack {
       },
     });
 
+    // When the Lambda authorizer rejects a request, API Gateway generates the
+    // 401/403 response itself — before the Lambda runs — so no CORS headers are
+    // added. The browser then blocks the response (JS sees status: 0).
+    // Gateway Responses fix this by injecting the header at the API GW level.
+    api.addGatewayResponse('Unauthorized', {
+      type: apigateway.ResponseType.UNAUTHORIZED,
+      responseHeaders: { 'Access-Control-Allow-Origin': "'*'" },
+    });
+
+    api.addGatewayResponse('AccessDenied', {
+      type: apigateway.ResponseType.ACCESS_DENIED,
+      responseHeaders: { 'Access-Control-Allow-Origin': "'*'" },
+    });
+
     const bucket = new s3.Bucket(this, 'ImportProductsBucket', {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
