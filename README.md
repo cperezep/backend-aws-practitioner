@@ -56,6 +56,7 @@ curl https://44hcac7j89.execute-api.us-east-1.amazonaws.com/prod/products/f47ac1
 curl -X POST https://44hcac7j89.execute-api.us-east-1.amazonaws.com/prod/products \
   -H 'Content-Type: application/json' \
   -d '{"title":"New Book","price":29.99,"count":10}'
+```
 
 ## Environment Configuration
 
