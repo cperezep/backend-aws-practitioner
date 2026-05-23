@@ -36,11 +36,12 @@ npm run spec:export
 
 Base URL: `https://44hcac7j89.execute-api.us-east-1.amazonaws.com/prod`
 
-| Method | Path | Description |
-|---|---|---|
-| GET | `/products` | Returns all products with stock counts |
-| GET | `/products/{productId}` | Returns a single product by ID with stock count |
-| POST | `/products` | Creates a new product and initial stock record |
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/products` | None | Returns all products with stock counts |
+| GET | `/products/{productId}` | None | Returns a single product by ID with stock count |
+| POST | `/products` | None | Creates a new product and initial stock record |
+| GET | `/import` | Basic Auth | Returns a pre-signed S3 URL to upload a CSV file |
 
 ### Examples
 
@@ -55,7 +56,6 @@ curl https://44hcac7j89.execute-api.us-east-1.amazonaws.com/prod/products/f47ac1
 curl -X POST https://44hcac7j89.execute-api.us-east-1.amazonaws.com/prod/products \
   -H 'Content-Type: application/json' \
   -d '{"title":"New Book","price":29.99,"count":10}'
-```
 
 ## Environment Configuration
 
@@ -67,6 +67,8 @@ cp .env.example .env
 
 | Variable | Required | Description |
 |---|---|---|
+| `GITHUB_LOGIN` | Yes | Your GitHub username — used as the Basic Auth username for the Import API |
+| `TEST_PASSWORD` | Yes | Password for the Basic Auth user (use `TEST_PASSWORD` as the literal value) |
 | `NOTIFY_ADMIN_EMAIL` | Yes | Email that receives **all** product-creation notifications |
 | `NOTIFY_OPS_EMAIL` | Yes | Email that receives only **high-value** product notifications |
 | `NOTIFY_HIGH_VALUE_PRICE_THRESHOLD` | No (default: `100`) | Minimum price (inclusive) to trigger the ops subscription |

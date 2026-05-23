@@ -2,14 +2,17 @@
 import 'dotenv/config';
 import * as cdk from 'aws-cdk-lib/core';
 import { ApiStack } from '../lib/stacks/api-stack';
+import { AuthStack } from '../lib/stacks/auth-stack';
 import { ImportServiceStack } from '../lib/stacks/import-stack';
 
 const app = new cdk.App();
 const env = { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION };
 
 const apiStack = new ApiStack(app, 'ApiStack', { env });
+const authStack = new AuthStack(app, 'AuthStack', { env });
 
 new ImportServiceStack(app, 'ImportServiceStack', {
   env,
   catalogItemsQueue: apiStack.catalogItemsQueue,
+  authorizerFn: authStack.basicAuthorizerFn,
 });

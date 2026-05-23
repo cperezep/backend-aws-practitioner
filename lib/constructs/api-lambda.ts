@@ -14,6 +14,8 @@ export interface ApiLambdaProps {
   resource: apigateway.IResource;
   /** Environment variables injected into the Lambda function at runtime */
   environment?: Record<string, string>;
+  /** Optional Lambda authorizer to protect this route */
+  authorizer?: apigateway.IAuthorizer;
 }
 
 export class ApiLambda extends Construct {
@@ -40,6 +42,12 @@ export class ApiLambda extends Construct {
     props.resource.addMethod(
       props.method,
       new apigateway.LambdaIntegration(this.handler, { proxy: true }),
+      props.authorizer
+        ? {
+            authorizationType: apigateway.AuthorizationType.CUSTOM,
+            authorizer: props.authorizer,
+          }
+        : undefined,
     );
   }
 }

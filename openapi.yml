@@ -78,6 +78,11 @@ paths:
         uses to upload the named CSV file directly to the import bucket
         under the key `uploaded/{name}`. The browser MUST send the upload
         with header `Content-Type: text/csv`.
+
+        **Authentication required.** Pass your credentials as a Basic Auth header:
+        `Authorization: Basic base64(username:password)`
+      security:
+        - basicAuth: []
       tags: [Import]
       parameters:
         - name: name
@@ -111,6 +116,24 @@ paths:
                   value: { message: 'name must end with .csv' }
                 invalidChars:
                   value: { message: 'name contains invalid characters' }
+        "401":
+          description: Authorization header is missing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing:
+                  value: { message: 'Unauthorized' }
+        "403":
+          description: Credentials are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                denied:
+                  value: { message: 'User is not authorized to access this resource with an explicit deny' }
         "500":
           description: Internal error generating the signed URL.
           content:
@@ -174,6 +197,13 @@ paths:
                 type: "string"
           content: {}
 components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: >
+        Base64-encoded `username:password`. The username must match an entry
+        in the authorizer Lambda's environment variables.
   schemas:
     Product:
       type: "object"
