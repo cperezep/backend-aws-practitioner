@@ -57,6 +57,24 @@ curl -X POST https://44hcac7j89.execute-api.us-east-1.amazonaws.com/prod/product
   -d '{"title":"New Book","price":29.99,"count":10}'
 ```
 
+## Environment Configuration
+
+Before deploying, copy `.env.example` to `.env` and fill in the values:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Required | Description |
+|---|---|---|
+| `NOTIFY_ADMIN_EMAIL` | Yes | Email that receives **all** product-creation notifications |
+| `NOTIFY_OPS_EMAIL` | Yes | Email that receives only **high-value** product notifications |
+| `NOTIFY_HIGH_VALUE_PRICE_THRESHOLD` | No (default: `100`) | Minimum price (inclusive) to trigger the ops subscription |
+
+> `.env` is gitignored. Never commit it. Commit `.env.example` instead.
+
+The values are consumed at CDK synth/deploy time to configure the SNS email subscriptions. They are **not** injected into Lambda runtime environment variables.
+
 ## DynamoDB Setup
 
 Two tables are provisioned automatically by `npm run deploy`:

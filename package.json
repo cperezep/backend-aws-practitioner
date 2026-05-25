@@ -16,8 +16,8 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "synth": "cdk synth",
-    "deploy": "cdk deploy",
-    "destroy": "cdk destroy",
+    "deploy": "cdk deploy --all",
+    "destroy": "cdk destroy --all",
     "seed": "ts-node --project tsconfig.json scripts/seed-tables.ts",
     "spec:export": "aws apigateway get-export --rest-api-id 44hcac7j89 --stage-name prod --export-type oas30 --accepts application/yaml openapi.yml"
   },
@@ -28,6 +28,7 @@
     "@types/node": "^24.10.1",
     "aws-cdk": "2.1118.0",
     "aws-sdk-client-mock": "^4.1.0",
+    "dotenv": "^17.4.2",
     "esbuild": "^0.28.0",
     "jest": "^30",
     "ts-jest": "^29",
@@ -37,6 +38,8 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1036.0",
     "@aws-sdk/client-s3": "^3.1045.0",
+    "@aws-sdk/client-sns": "^3.1045.0",
+    "@aws-sdk/client-sqs": "^3.1045.0",
     "@aws-sdk/lib-dynamodb": "^3.1036.0",
     "@aws-sdk/s3-request-presigner": "^3.1045.0",
     "@middy/core": "^7.2.3",

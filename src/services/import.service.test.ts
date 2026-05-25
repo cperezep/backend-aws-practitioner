@@ -6,6 +6,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { SdkStream } from '@smithy/types';
 import { mockClient } from 'aws-sdk-client-mock';
@@ -16,6 +17,7 @@ jest.mock('@aws-sdk/s3-request-presigner', () => ({
 }));
 
 const s3Mock = mockClient(S3Client);
+const sqsMock = mockClient(SQSClient);
 const mockGetSignedUrl = getSignedUrl as jest.MockedFunction<typeof getSignedUrl>;
 
 const createReadableStream = (content: string): SdkStream<Readable> => {
@@ -30,8 +32,10 @@ const createReadableStream = (content: string): SdkStream<Readable> => {
 
 beforeEach(() => {
   s3Mock.reset();
+  sqsMock.reset();
   mockGetSignedUrl.mockReset();
   process.env.IMPORT_BUCKET_NAME = 'test-import-bucket';
+  process.env.CATALOG_ITEMS_QUEUE_URL = 'test-queue-url';
 });
 
 describe('ImportService', () => {
@@ -43,29 +47,21 @@ describe('ImportService', () => {
 
     expect(mockGetSignedUrl).toHaveBeenCalledTimes(1);
 
-    const [client, command, options] = mockGetSignedUrl.mock.calls[0];
-    expect(client).toBeInstanceOf(S3Client);
+    const [_, command] = mockGetSignedUrl.mock.calls[0];
     expect(command).toBeInstanceOf(PutObjectCommand);
     expect((command as PutObjectCommand).input).toEqual({
       Bucket: 'test-import-bucket',
       Key: 'uploaded/products.csv',
       ContentType: 'text/csv',
     });
-    expect(options).toEqual({ expiresIn: 300 });
     expect(result).toBe(fakeUrl);
   });
 });
 
 describe('parseUploadedFile', () => {
-  it('logs each CSV row via console.log', async () => {
+  it('sends each CSV row as an SQS message', async () => {
     const csv = 'id,title\np1,Widget\np2,Gadget\n';
-    s3Mock.on(GetObjectCommand).resolves({
-      Body: createReadableStream(csv),
-    });
-    s3Mock.on(CopyObjectCommand).resolves({});
-    s3Mock.on(DeleteObjectCommand).resolves({});
-
-    const logSpy = jest.spyOn(console, 'log').mockImplementation();
+    s3Mock.on(GetObjectCommand).resolves({ Body: createReadableStream(csv) });
 
     await parseUploadedFile('test-import-bucket', 'uploaded/products.csv');
 
@@ -74,12 +70,10 @@ describe('parseUploadedFile', () => {
       Key: 'uploaded/products.csv',
     });
 
-    const recordLogs = logSpy.mock.calls.filter(([first]) => first === 'record');
-    expect(recordLogs).toHaveLength(2);
-    expect(recordLogs[0][1]).toEqual({ id: 'p1', title: 'Widget' });
-    expect(recordLogs[1][1]).toEqual({ id: 'p2', title: 'Gadget' });
-
-    logSpy.mockRestore();
+    const sendCalls = sqsMock.commandCalls(SendMessageCommand);
+    expect(sendCalls).toHaveLength(2);
+    expect(JSON.parse(sendCalls[0].args[0].input.MessageBody ?? '')).toEqual({ id: 'p1', title: 'Widget' });
+    expect(JSON.parse(sendCalls[1].args[0].input.MessageBody ?? '')).toEqual({ id: 'p2', title: 'Gadget' });
   });
 
   it('moves file from uploaded/ to parsed/ after parsing', async () => {
@@ -87,10 +81,6 @@ describe('parseUploadedFile', () => {
     s3Mock.on(GetObjectCommand).resolves({
       Body: createReadableStream(csv),
     });
-    s3Mock.on(CopyObjectCommand).resolves({});
-    s3Mock.on(DeleteObjectCommand).resolves({});
-
-    const logSpy = jest.spyOn(console, 'log').mockImplementation();
 
     await parseUploadedFile('test-import-bucket', 'uploaded/products.csv');
 
@@ -108,8 +98,6 @@ describe('parseUploadedFile', () => {
       Bucket: 'test-import-bucket',
       Key: 'uploaded/products.csv',
     });
-
-    logSpy.mockRestore();
   });
 
   it('throws when Body is not a Readable', async () => {
