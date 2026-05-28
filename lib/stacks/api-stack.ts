@@ -87,7 +87,7 @@ export class ApiStack extends cdk.Stack {
     const catalogBatchProcess = new lambda.NodejsFunction(this, 'CatalogBatchProcess', {
       entry: path.join(process.cwd(), 'src', 'lambdas', 'catalog-batch-process', 'handler.ts'),
       handler: 'handler',
-      runtime: lambdaRuntime.Runtime.NODEJS_20_X,
+      runtime: lambdaRuntime.Runtime.NODEJS_24_X,
       memorySize: 256,
       timeout: Duration.seconds(30),
       environment: tableEnv,
