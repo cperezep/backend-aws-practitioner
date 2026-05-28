@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib/core';
 import { Duration } from 'aws-cdk-lib/core';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
@@ -12,6 +13,7 @@ import { ApiLambda } from '../constructs/api-lambda';
 
 export interface ImportServiceStackProps extends cdk.StackProps {
   catalogItemsQueue: sqs.IQueue;
+  authorizerFn: lambda.IFunction;
 }
 
 export class ImportServiceStack extends cdk.Stack {
@@ -28,6 +30,20 @@ export class ImportServiceStack extends cdk.Stack {
       },
     });
 
+    // When the Lambda authorizer rejects a request, API Gateway generates the
+    // 401/403 response itself — before the Lambda runs — so no CORS headers are
+    // added. The browser then blocks the response (JS sees status: 0).
+    // Gateway Responses fix this by injecting the header at the API GW level.
+    api.addGatewayResponse('Unauthorized', {
+      type: apigateway.ResponseType.UNAUTHORIZED,
+      responseHeaders: { 'Access-Control-Allow-Origin': "'*'" },
+    });
+
+    api.addGatewayResponse('AccessDenied', {
+      type: apigateway.ResponseType.ACCESS_DENIED,
+      responseHeaders: { 'Access-Control-Allow-Origin': "'*'" },
+    });
+
     const bucket = new s3.Bucket(this, 'ImportProductsBucket', {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
@@ -42,6 +58,16 @@ export class ImportServiceStack extends cdk.Stack {
       ],
     });
 
+    const authorizerRole = new iam.Role(this, 'ApiGwAuthorizerRole', {
+      assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com'),
+    });
+
+    const authorizer = new apigateway.TokenAuthorizer(this, 'BasicAuthorizer', {
+      handler: props.authorizerFn,
+      assumeRole: authorizerRole,
+      resultsCacheTtl: Duration.seconds(0),
+    });
+
     const importResource = api.root.addResource('import');
     const signer = new ApiLambda(this, 'ImportProductsFile', {
       entry: 'import-products-file',
@@ -50,6 +76,7 @@ export class ImportServiceStack extends cdk.Stack {
       environment: {
         IMPORT_BUCKET_NAME: bucket.bucketName,
       },
+      authorizer,
     });
 
     bucket.grantPut(signer.handler, 'uploaded/*');
