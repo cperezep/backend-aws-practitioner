@@ -14,7 +14,7 @@ export class AuthStack extends cdk.Stack {
     this.basicAuthorizerFn = new lambda.NodejsFunction(this, 'BasicAuthorizer', {
       entry: path.join(process.cwd(), 'src', 'lambdas', 'basic-authorizer', 'handler.ts'),
       handler: 'handler',
-      runtime: lambdaRuntime.Runtime.NODEJS_20_X,
+      runtime: lambdaRuntime.Runtime.NODEJS_24_X,
       memorySize: 256,
       timeout: Duration.seconds(10),
       environment: {

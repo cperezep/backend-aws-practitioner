@@ -84,7 +84,7 @@ export class ImportServiceStack extends cdk.Stack {
     const parserFn = new lambda_nodejs.NodejsFunction(this, 'ImportFileParser', {
       entry: path.join(process.cwd(), 'src', 'lambdas', 'import-file-parser', 'handler.ts'),
       handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_24_X,
       memorySize: 512,
       timeout: Duration.seconds(30),
       environment: {
